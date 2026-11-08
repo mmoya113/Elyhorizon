@@ -597,7 +597,9 @@ fn a_download_goes_on_past_an_asset_that_keeps_failing() {
         .join(&lang)
         .is_file());
     let sound = server.asked().iter().filter(|u| u.ends_with(&hash)).count();
-    assert_eq!(sound, 3, "tried three times");
+    // Retries with backoff belong to the shared GET client (`network.rs`), not to this layer,
+    // so a file the server doesn't have is asked for once here and the download moves on.
+    assert_eq!(sound, 1, "asked once; the shared client owns the retries");
     let last = logged.lock().unwrap().last().cloned().unwrap();
     assert!(last.contains("1 of 2 files failed"), "{last}");
     fs::remove_dir_all(&dir).unwrap();

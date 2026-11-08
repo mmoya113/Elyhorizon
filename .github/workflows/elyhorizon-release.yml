@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version, for example 0.2.1 or 0.2.1-beta.1'
+        description: 'Release version, for example 0.2.1 or 0.2.1-beta.1 (a leading "v" or "elyhorizon-v" is ignored)'
         required: true
         type: string
       publish:
@@ -51,7 +51,7 @@ jobs:
         run: |
           $version = if ($env:GITHUB_EVENT_NAME -eq 'push') {
             $env:GITHUB_REF_NAME -replace '^elyhorizon-v', ''
-          } else { $env:INPUT_VERSION }
+          } else { $env:INPUT_VERSION -replace '\s', '' -replace '^(elyhorizon-)?v', '' }
           if ($version -notmatch '^\d+\.\d+\.\d+(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?$') {
             throw 'Expected a version such as 0.2.1 or 0.2.1-beta.1'
           }
@@ -193,6 +193,7 @@ jobs:
           set -euo pipefail
           version=$INPUT_VERSION
           if [[ "$GITHUB_EVENT_NAME" == push ]]; then version=${GITHUB_REF_NAME#elyhorizon-v}; fi
+          version=${version//[[:space:]]/}; version=${version#elyhorizon-}; version=${version#v}
           [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$ ]] || { echo '::error::Invalid release version'; exit 1; }
           echo "VERSION=$version" >> "$GITHUB_ENV"
           echo "HORIZON_LAUNCHER_VERSION=$version" >> "$GITHUB_ENV"
@@ -336,6 +337,7 @@ jobs:
           set -euo pipefail
           version=$INPUT_VERSION
           if [[ "$GITHUB_EVENT_NAME" == push ]]; then version=${GITHUB_REF_NAME#elyhorizon-v}; fi
+          version=${version//[[:space:]]/}; version=${version#elyhorizon-}; version=${version#v}
           [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$ ]] || { echo '::error::Invalid release version'; exit 1; }
           echo "VERSION=$version" >> "$GITHUB_ENV"
           echo "HORIZON_LAUNCHER_VERSION=$version" >> "$GITHUB_ENV"
